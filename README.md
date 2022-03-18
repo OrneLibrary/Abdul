@@ -10,6 +10,7 @@ options:
   -h, --help  Show help message and exit  
   -o O        Location to save file (default=word.list  
   -d D        Depth to spider (default=2)  
+  -m M        Max number of pages to scrape (default=500)
   -l L        Minimum length of word to search for (default=4)  
   -v          Display verbose output  
   </pre>

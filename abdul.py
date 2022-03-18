@@ -1,5 +1,4 @@
 import re
-import sys
 import requests
 import argparse
 
@@ -9,6 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("URL", help="URL to start from")
 parser.add_argument("-o", default="word.list", help="Location to save file (default=word.list")
 parser.add_argument("-d", type=int, default=2, help="Depth to spider (default=2)")
+parser.add_argument("-m", type=int, default=500, help="Max number of pages to scrape (default=500)")
 parser.add_argument("-l", type=int, default=4, help="Minimum length of word to search for (default=4)")
 parser.add_argument("-v", help="Display verbose output", action="store_true")
 
@@ -40,14 +40,15 @@ def addURLs(hrefs):
         newURL = urlItem.replace("href=",'').replace('"','',2)
         if newURL[0] == "/":
             newURL = node.url + newURL # Build URL if it is refrencing a local resource
-        if rootDomain in newURL and node.depth < args.d and newURL not in webListingsStrings and not re.match(r'\.(css|zip|gz|bz2|png|gif|jpg|jpeg|bmp|mpg|mpeg|avi|wmv|mov|rm|ram|swf|flv|ogg|webm|mp4|mp3|wav|acc|wma|mid|midi)$',newURL):
+        if len(webListings) < args.m and rootDomain in newURL and node.depth < args.d and newURL not in webListingsStrings and not re.match(r'\.(css|zip|gz|bz2|png|gif|jpg|jpeg|bmp|mpg|mpeg|avi|wmv|mov|rm|ram|swf|flv|ogg|webm|mp4|mp3|wav|acc|wma|mid|midi)$',newURL):
             if args.v:
-                print("Adding URL: " + newURL)
+                print("Adding URL: (" + str(len(webListings)) + ") " + newURL)
             webListings.append(webNode(newURL,node.depth+1))
             webListingsStrings.append(newURL)
 
 
 def dedupeFile():
+    print("Starting dedupe")
     outWords = []
     outFile = open(args.o,"a", encoding="utf-8")
     with open(tempFile, encoding="utf-8") as inFile:
@@ -69,10 +70,17 @@ headers = {
 }
 
 # Loops through each node dynamicaly
+
+if not args.v:
+    print("You have chonse no verbose output. This proccess will take a while. You might want to kill this and add \'-v\' to track progress.")
+else:
+    currentNode = 1
+
 for node in webListings:
 
     if args.v:
-        print("Working on: " + node.url + ":" + str(node.depth))
+        print("Working on: (" + str(currentNode) + " of " + str(len(webListings)) + ") " + node.url + ":" + str(node.depth))
+        currentNode+=1
     
     # Try website connection
     try:
@@ -80,7 +88,8 @@ for node in webListings:
     except:
         print("Host unreachable:  " + node.url)
         continue
-    addURLs(re.findall('href=".+?"',data.text))
+    if len(webListings) < args.m:
+        addURLs(re.findall('href=".+?"',data.text))
     searchContent(data.text)
 
 
