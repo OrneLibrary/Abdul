@@ -1,5 +1,4 @@
 import re
-import sys
 import requests
 import argparse
 
@@ -42,12 +41,13 @@ def addURLs(hrefs):
             newURL = node.url + newURL # Build URL if it is refrencing a local resource
         if rootDomain in newURL and node.depth < args.d and newURL not in webListingsStrings and not re.match(r'\.(css|zip|gz|bz2|png|gif|jpg|jpeg|bmp|mpg|mpeg|avi|wmv|mov|rm|ram|swf|flv|ogg|webm|mp4|mp3|wav|acc|wma|mid|midi)$',newURL):
             if args.v:
-                print("Adding URL: " + newURL)
+                print("Adding URL: (" + str(len(webListings)) + ") " + newURL)
             webListings.append(webNode(newURL,node.depth+1))
             webListingsStrings.append(newURL)
 
 
 def dedupeFile():
+    print("Starting dedupe")
     outWords = []
     outFile = open(args.o,"a", encoding="utf-8")
     with open(tempFile, encoding="utf-8") as inFile:
@@ -69,10 +69,17 @@ headers = {
 }
 
 # Loops through each node dynamicaly
+
+if not args.v:
+    print("You have chonse no verbose output. This proccess will take a while. You might want to kill this and add \'-v\' to track progress.")
+else:
+    currentNode = 1
+
 for node in webListings:
 
     if args.v:
-        print("Working on: " + node.url + ":" + str(node.depth))
+        print("Working on: (" + str(currentNode) + " of " + str(len(webListings)) + ") " + node.url + ":" + str(node.depth))
+        currentNode+=1
     
     # Try website connection
     try:
